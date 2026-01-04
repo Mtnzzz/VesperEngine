@@ -1,0 +1,152 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "windows-clang64-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/clang64/bin/clang++.exe",
+                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+            }
+        },
+        {
+            "name": "windows-clang32-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "C:/msys64/clang32/bin/clang.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/clang32/bin/clang++.exe",
+                "CMAKE_SYSTEM_PROCESSOR": "x86"
+            }
+        },
+        {
+            "name": "linux-gcc-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "windows64-debug",
+            "inherits": "windows-clang64-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows64-release",
+            "inherits": "windows-clang64-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "windows32-debug",
+            "inherits": "windows-clang32-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows32-release",
+            "inherits": "windows-clang32-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "linux-debug",
+            "inherits": "linux-gcc-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-release",
+            "inherits": "linux-gcc-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows64-debug-build",
+            "configurePreset": "windows64-debug"
+        },
+        {
+            "name": "windows64-release-build",
+            "configurePreset": "windows64-release"
+        },
+        {
+            "name": "windows32-debug-build",
+            "configurePreset": "windows32-debug"
+        },
+        {
+            "name": "windows32-release-build",
+            "configurePreset": "windows32-release"
+        },
+        {
+            "name": "linux-debug-build",
+            "configurePreset": "linux-debug"
+        },
+        {
+            "name": "linux-release-build",
+            "configurePreset": "linux-release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "windows64-debug-test",
+            "configurePreset": "windows64-debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "windows64-release-test",
+            "configurePreset": "windows64-release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "windows32-debug-test",
+            "configurePreset": "windows32-debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "windows32-release-test",
+            "configurePreset": "windows32-release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-debug-test",
+            "configurePreset": "linux-debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-release-test",
+            "configurePreset": "linux-release",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}

@@ -1,0 +1,6 @@
+.claude
+out
+.cache
+.vscode
+bin
+.env

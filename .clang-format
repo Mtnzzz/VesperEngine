@@ -1,0 +1,142 @@
+---
+# 基于 LLVM 风格的 C++ 代码格式化配置
+BasedOnStyle: LLVM
+Language: Cpp
+
+# ==================== 基础缩进设置 ====================
+UseTab: Never
+IndentWidth: 4
+TabWidth: 4
+ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+
+# ==================== 列宽限制 ====================
+ColumnLimit: 120
+
+# ==================== 访问修饰符 ====================
+AccessModifierOffset: -4
+
+# ==================== 命名空间 ====================
+NamespaceIndentation: All
+CompactNamespaces: false
+FixNamespaceComments: false
+
+# ==================== 大括号换行 ====================
+BreakBeforeBraces: Linux
+
+# ==================== 预处理器缩进 ====================
+IndentPPDirectives: BeforeHash
+PPIndentWidth: 2
+
+# ==================== 二元和三元运算符 ====================
+BreakBeforeBinaryOperators: All
+BreakBeforeTernaryOperators: false
+
+# ==================== 指针和引用对齐 ====================
+PointerAlignment: Right
+ReferenceAlignment: Right
+DerivePointerAlignment: false
+
+# ==================== 参数打包 ====================
+BinPackArguments: true
+BinPackParameters: true
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# ==================== 短语句控制 ====================
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
+
+# ==================== case 标签缩进 ====================
+IndentCaseLabels: true
+IndentCaseBlocks: false
+
+# ==================== 大括号列表样式 ====================
+Cpp11BracedListStyle: true
+
+# ==================== 对齐设置 ====================
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+AlignConsecutiveDeclarations:
+  Enabled: false
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignTrailingComments: true
+AlignOperands: AlignAfterOperator
+AlignEscapedNewlines: Right
+
+# ==================== 包含文件排序 ====================
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<sys/'
+    Priority: 1
+  - Regex: '^<[a-z_]+\.h>'
+    Priority: 2
+  - Regex: '^<[a-z_]+>'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 4
+
+# ==================== 空格控制 ====================
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInAngles: Never
+SpacesInSquareBrackets: false
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesInContainerLiterals: false
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeRangeBasedForLoopColon: true
+
+# ==================== 空行控制 ====================
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# ==================== 其他格式化选项 ====================
+ReflowComments: true
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+BreakBeforeConceptDeclarations: Always
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+InsertBraces: false
+InsertTrailingCommas: None
+PackConstructorInitializers: NextLine
+SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 0
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+
+# ==================== 惩罚值设置 ====================
+PenaltyBreakAssignment: 100
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 200
+PenaltyIndentedWhitespace: 0
