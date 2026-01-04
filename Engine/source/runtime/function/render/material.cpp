@@ -1,5 +1,6 @@
 #include "material.h"
 #include "texture_manager.h"
+#include "shader_reflector.h"
 #include "runtime/core/log/log_system.h"
 
 namespace vesper {
@@ -335,6 +336,149 @@ bool Material::createDescriptorSet(RHIDescriptorSetLayoutHandle layout)
     writes.push_back(samplerWrite);
 
     m_rhi->updateDescriptorSet(m_descriptorSet, writes);
+
+    return true;
+}
+
+// =============================================================================
+// Name-Based Binding (for Shader Reflection)
+// =============================================================================
+
+void Material::setTextureByName(const std::string& name, TexturePtr texture)
+{
+    if (texture && texture->isValid())
+    {
+        m_namedTextures[name] = texture;
+    }
+    else
+    {
+        m_namedTextures.erase(name);
+    }
+}
+
+TexturePtr Material::getTextureByName(const std::string& name) const
+{
+    auto it = m_namedTextures.find(name);
+    if (it != m_namedTextures.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+bool Material::updateDescriptorSetFromReflection(const ShaderProgramReflection& reflection)
+{
+    if (!m_rhi || !m_descriptorSet)
+    {
+        LOG_ERROR("Material::updateDescriptorSetFromReflection: Invalid RHI or descriptor set");
+        return false;
+    }
+
+    std::vector<RHIDescriptorWrite> writes;
+
+    for (const auto& binding : reflection.bindings)
+    {
+        // Only handle texture/sampler bindings in set 0
+        if (binding.set != 0)
+        {
+            continue;
+        }
+
+        if (binding.type == RHIDescriptorType::CombinedImageSampler ||
+            binding.type == RHIDescriptorType::SampledImage)
+        {
+            // Find texture by name
+            TexturePtr texture = getTextureByName(binding.name);
+
+            // If not found by exact name, try common naming patterns
+            if (!texture)
+            {
+                // Try slot-based lookup for common names
+                if (binding.name.find("albedo") != std::string::npos ||
+                    binding.name.find("diffuse") != std::string::npos ||
+                    binding.name.find("baseColor") != std::string::npos)
+                {
+                    texture = m_textures[static_cast<size_t>(MaterialTextureSlot::Albedo)];
+                }
+                else if (binding.name.find("normal") != std::string::npos)
+                {
+                    texture = m_textures[static_cast<size_t>(MaterialTextureSlot::Normal)];
+                }
+                else if (binding.name.find("metallic") != std::string::npos)
+                {
+                    texture = m_textures[static_cast<size_t>(MaterialTextureSlot::Metallic)];
+                }
+                else if (binding.name.find("roughness") != std::string::npos)
+                {
+                    texture = m_textures[static_cast<size_t>(MaterialTextureSlot::Roughness)];
+                }
+                else if (binding.name.find("ao") != std::string::npos ||
+                         binding.name.find("occlusion") != std::string::npos)
+                {
+                    texture = m_textures[static_cast<size_t>(MaterialTextureSlot::AO)];
+                }
+            }
+
+            if (!texture || !texture->isValid())
+            {
+                LOG_WARN("Material: No texture found for binding '{}' in material '{}'",
+                         binding.name, m_name);
+                continue;
+            }
+
+            if (binding.type == RHIDescriptorType::CombinedImageSampler)
+            {
+                RHIDescriptorWrite write{};
+                write.binding = binding.binding;
+                write.type = RHIDescriptorType::CombinedImageSampler;
+                write.texture = texture->getTexture();
+                write.sampler = texture->getSampler();
+                writes.push_back(write);
+            }
+            else
+            {
+                RHIDescriptorWrite write{};
+                write.binding = binding.binding;
+                write.type = RHIDescriptorType::SampledImage;
+                write.texture = texture->getTexture();
+                writes.push_back(write);
+            }
+        }
+        else if (binding.type == RHIDescriptorType::Sampler)
+        {
+            // For separate samplers, use the first available texture's sampler
+            for (const auto& tex : m_textures)
+            {
+                if (tex && tex->isValid())
+                {
+                    RHIDescriptorWrite write{};
+                    write.binding = binding.binding;
+                    write.type = RHIDescriptorType::Sampler;
+                    write.sampler = tex->getSampler();
+                    writes.push_back(write);
+                    break;
+                }
+            }
+        }
+        else if (binding.type == RHIDescriptorType::UniformBuffer)
+        {
+            if (m_uniformBuffer)
+            {
+                RHIDescriptorWrite write{};
+                write.binding = binding.binding;
+                write.type = RHIDescriptorType::UniformBuffer;
+                write.buffer = m_uniformBuffer;
+                write.bufferRange = sizeof(MaterialUniformData);
+                writes.push_back(write);
+            }
+        }
+    }
+
+    if (!writes.empty())
+    {
+        m_rhi->updateDescriptorSet(m_descriptorSet, writes);
+        LOG_DEBUG("Material: Updated descriptor set for '{}' with {} bindings", m_name, writes.size());
+    }
 
     return true;
 }

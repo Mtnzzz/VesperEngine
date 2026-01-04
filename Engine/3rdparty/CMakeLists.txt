@@ -138,6 +138,36 @@ if(NOT TARGET DirectXMath)
 endif()
 
 # ==============================================================================
+# SPIRV-Cross - SPIR-V parsing and cross-compilation tools
+# ==============================================================================
+if(NOT TARGET spirv-cross-core)
+    # Disable unnecessary features (use FORCE to override cached values)
+    set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_GLSL ON CACHE BOOL "" FORCE)   # Required for CPP support
+    set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_CPP ON CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_REFLECT OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_C_API OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_ENABLE_UTIL OFF CACHE BOOL "" FORCE)
+    set(SPIRV_CROSS_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+
+    add_subdirectory(SPIRV-Cross)
+
+    # Set folder for IDE
+    if(TARGET spirv-cross-core)
+        set_target_properties(spirv-cross-core PROPERTIES FOLDER ${THIRD_PARTY_FOLDER}/SPIRV-Cross)
+    endif()
+    if(TARGET spirv-cross-glsl)
+        set_target_properties(spirv-cross-glsl PROPERTIES FOLDER ${THIRD_PARTY_FOLDER}/SPIRV-Cross)
+    endif()
+    if(TARGET spirv-cross-cpp)
+        set_target_properties(spirv-cross-cpp PROPERTIES FOLDER ${THIRD_PARTY_FOLDER}/SPIRV-Cross)
+    endif()
+endif()
+
+# ==============================================================================
 # Assimp - Open Asset Import Library
 # ==============================================================================
 if(NOT TARGET assimp)

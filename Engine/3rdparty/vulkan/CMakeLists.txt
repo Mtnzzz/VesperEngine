@@ -60,13 +60,10 @@ target_include_directories(vesper_spirv_tools INTERFACE
 )
 
 # ==============================================================================
-# SPIRV-Cross Support
+# SPIRV-Cross Support (now provided by Engine/3rdparty/SPIRV-Cross)
 # ==============================================================================
-add_library(vesper_spirv_cross INTERFACE)
-
-target_include_directories(vesper_spirv_cross INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv_cross
-)
+# SPIRV-Cross is now built from source in Engine/3rdparty/SPIRV-Cross
+# Use targets: spirv-cross-core, spirv-cross-cpp
 
 # ==============================================================================
 # SPIRV-Headers Support
@@ -104,7 +101,6 @@ target_link_libraries(vesper_vulkan_toolchain INTERFACE
     vesper_vulkan
     vesper_slang
     vesper_spirv_tools
-    vesper_spirv_cross
     vesper_spirv_headers
     vesper_glslang
     vesper_dxc

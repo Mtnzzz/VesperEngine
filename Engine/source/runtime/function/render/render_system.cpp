@@ -6,6 +6,7 @@
 #include "texture.h"
 #include "texture_manager.h"
 #include "model_loader.h"
+#include "shader_reflector.h"
 
 #include "runtime/function/window/window_system.h"
 #include "runtime/platform/input/input_system.h"
@@ -588,8 +589,9 @@ void RenderSystem::recordCommands(RHICommandBufferHandle cmd, uint32_t imageInde
     {
         m_rhi->cmdBindPipeline(cmd, m_modelPipeline);
 
-        // Build Model matrix: rotate model around Y axis
-        Matrix4x4 modelMatrix = Matrix4x4::rotationY(m_rotationTime * 0.5f);
+        // Build Model matrix: rotate model to stand upright (-90 degrees around X axis)
+        constexpr float PI_OVER_2 = 1.5707963267948966f;
+        Matrix4x4 modelMatrix = Matrix4x4::rotationX(-PI_OVER_2);
 
         // Get View-Projection matrix from camera
         Matrix4x4 viewMatrix = m_mainCamera->getViewMatrix();
@@ -742,10 +744,9 @@ bool RenderSystem::createMinimalResources()
 
     m_mainCamera = std::make_shared<Camera>(cameraConfig);
 
-    // Position camera at an angle to better see 3D cube
-    // Camera at (2, 2, -4) looking at origin - should show front, top, and right faces
-    m_mainCamera->setPosition(Vector3(2.0f, 2.0f, -4.0f));
-    m_mainCamera->lookAt(Vector3(0.0f, 0.0f, 0.0f));
+    // Position camera to see the car from the side
+    m_mainCamera->setPosition(Vector3(0.0f, 1.0f, 3.0f));
+    m_mainCamera->lookAt(Vector3(0.0f, 0.5f, 0.0f));
 
     float aspectRatio = static_cast<float>(m_swapChainWidth) / static_cast<float>(m_swapChainHeight);
     m_mainCamera->setAspectRatio(aspectRatio);
@@ -942,12 +943,20 @@ void RenderSystem::processCameraInput(InputSystem* input, float deltaTime)
 
     // Speed modifiers
     float moveSpeed = 5.0f;
-    const float rotateSpeed = 2.0f;  // radians per second
+    float rotateSpeed = 2.0f;  // radians per second
 
     // Hold Left Ctrl for faster movement
     if (input->isKeyPressed(GLFW_KEY_LEFT_CONTROL))
     {
         moveSpeed *= 3.0f;
+        rotateSpeed *= 2.0f;
+    }
+
+    // Hold Left Alt for slower movement
+    if (input->isKeyPressed(GLFW_KEY_LEFT_ALT))
+    {
+        moveSpeed *= 0.2f;
+        rotateSpeed *= 0.3f;
     }
 
     // WASD movement (using GLFW key codes)
@@ -987,10 +996,10 @@ void RenderSystem::processCameraInput(InputSystem* input, float deltaTime)
         m_mainCamera->rotate(deltaPitch, deltaYaw);
     }
 
-    // Reset camera to default position (Home key)
+    // Reset camera to default position (Home key) - side view of car
     if (input->isKeyDown(GLFW_KEY_HOME))
     {
-        m_mainCamera->setPosition(Vector3(3.0f, 2.0f, 3.0f));
+        m_mainCamera->setPosition(Vector3(0.0f, 1.0f, 3.0f));
         m_mainCamera->lookAt(Vector3(0.0f, 0.5f, 0.0f));
     }
 }
@@ -1193,24 +1202,54 @@ bool RenderSystem::createModelResources()
     LOG_INFO("RenderSystem: Loaded model shaders successfully");
 
     // -------------------------------------------------------------------------
-    // 4. Create Descriptor Set Layout
+    // 4. Reflect Shaders and Create Descriptor Set Layout
     // -------------------------------------------------------------------------
 
-    RHIDescriptorSetLayoutDesc layoutDesc{};
-    layoutDesc.bindings.push_back(RHIDescriptorBinding{
-        .binding = 0,
-        .descriptorType = RHIDescriptorType::SampledImage,
-        .descriptorCount = 1,
-        .stageFlags = RHIShaderStage::Fragment
-    });
-    layoutDesc.bindings.push_back(RHIDescriptorBinding{
-        .binding = 1,
-        .descriptorType = RHIDescriptorType::Sampler,
-        .descriptorCount = 1,
-        .stageFlags = RHIShaderStage::Fragment
-    });
+    // Use shader reflection to automatically create descriptor set layout
+    auto shaderReflection = ShaderReflector::reflectProgram(
+        (shaderDir / "model.vert.spv").string(),
+        (shaderDir / "model.frag.spv").string()
+    );
 
-    m_modelDescriptorSetLayout = m_rhi->createDescriptorSetLayout(layoutDesc);
+    if (shaderReflection.bindings.empty())
+    {
+        LOG_WARN("RenderSystem: No bindings found in shader reflection, using manual layout");
+        // Fallback to manual layout if reflection fails
+        RHIDescriptorSetLayoutDesc layoutDesc{};
+        layoutDesc.bindings.push_back(RHIDescriptorBinding{
+            .binding = 0,
+            .descriptorType = RHIDescriptorType::SampledImage,
+            .descriptorCount = 1,
+            .stageFlags = RHIShaderStage::Fragment
+        });
+        layoutDesc.bindings.push_back(RHIDescriptorBinding{
+            .binding = 1,
+            .descriptorType = RHIDescriptorType::Sampler,
+            .descriptorCount = 1,
+            .stageFlags = RHIShaderStage::Fragment
+        });
+        m_modelDescriptorSetLayout = m_rhi->createDescriptorSetLayout(layoutDesc);
+    }
+    else
+    {
+        LOG_INFO("RenderSystem: Shader reflection found {} bindings, {} push constant ranges",
+                 shaderReflection.bindings.size(), shaderReflection.pushConstants.size());
+
+        // Log reflected bindings for debugging
+        for (const auto& binding : shaderReflection.bindings)
+        {
+            LOG_DEBUG("  Binding: set={}, binding={}, name='{}', type={}",
+                      binding.set, binding.binding, binding.name,
+                      static_cast<int>(binding.type));
+        }
+
+        // Create descriptor set layouts from reflection
+        auto layouts = ShaderReflector::createDescriptorSetLayouts(m_rhi.get(), shaderReflection);
+        if (!layouts.empty())
+        {
+            m_modelDescriptorSetLayout = layouts[0];
+        }
+    }
     if (!m_modelDescriptorSetLayout)
     {
         LOG_ERROR("RenderSystem: Failed to create model descriptor set layout");
@@ -1320,8 +1359,8 @@ bool RenderSystem::createModelResources()
     }
     LOG_INFO("RenderSystem: Created {} material descriptor sets", materialDescSetCount);
 
-    // Adjust camera for the car model
-    m_mainCamera->setPosition(Vector3(3.0f, 2.0f, 3.0f));
+    // Position camera at car's left side (car faces X direction)
+    m_mainCamera->setPosition(Vector3(0.0f, 1.0f, 3.0f));
     m_mainCamera->lookAt(Vector3(0.0f, 0.5f, 0.0f));
 
     return true;

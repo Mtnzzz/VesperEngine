@@ -2,7 +2,7 @@
 #include "runtime/function/render/rhi/rhi.h"
 #include "runtime/core/log/log_system.h"
 
-#include <spirv_cross/spirv_cross.hpp>
+#include <spirv_cross.hpp>
 
 #include <fstream>
 #include <algorithm>

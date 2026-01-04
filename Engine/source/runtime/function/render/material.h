@@ -6,10 +6,12 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace vesper {
 
 class TextureManager;
+struct ShaderProgramReflection;
 
 /// @brief PBR material texture slots
 enum class MaterialTextureSlot : uint8_t
@@ -169,6 +171,26 @@ public:
     /// @brief Check if descriptor set is created
     bool hasDescriptorSet() const { return m_descriptorSet != nullptr; }
 
+    // =========================================================================
+    // Name-Based Binding (for Shader Reflection)
+    // =========================================================================
+
+    /// @brief Set texture by shader variable name (uses reflection)
+    /// @param name Shader variable name (e.g., "albedoTexture", "normalMap")
+    /// @param texture Texture to bind
+    void setTextureByName(const std::string& name, TexturePtr texture);
+
+    /// @brief Get texture by shader variable name
+    TexturePtr getTextureByName(const std::string& name) const;
+
+    /// @brief Update descriptor set using shader reflection data
+    /// @param reflection Shader reflection data containing binding info
+    /// @return true if successful
+    bool updateDescriptorSetFromReflection(const ShaderProgramReflection& reflection);
+
+    /// @brief Get all named textures
+    const std::unordered_map<std::string, TexturePtr>& getNamedTextures() const { return m_namedTextures; }
+
     /// @brief Get material data (for serialization)
     const MaterialData& getData() const { return m_data; }
 
@@ -194,6 +216,9 @@ private:
 
     // Textures (indexed by MaterialTextureSlot)
     TexturePtr m_textures[static_cast<size_t>(MaterialTextureSlot::Count)];
+
+    // Named textures for shader reflection binding
+    std::unordered_map<std::string, TexturePtr> m_namedTextures;
 
     // GPU uniform buffer
     RHIBufferHandle m_uniformBuffer;
