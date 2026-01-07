@@ -98,6 +98,9 @@ target_link_libraries(${TARGET_NAME} PUBLIC vesper_vulkan_toolchain)
 # SPIRV-Cross for shader reflection
 target_link_libraries(${TARGET_NAME} PRIVATE spirv-cross-cpp)
 
+# EnTT - Entity Component System
+target_link_libraries(${TARGET_NAME} PUBLIC EnTT::EnTT)
+
 # Physics debug renderer (Windows only)
 if(VESPER_ENABLE_PHYSICS_DEBUG_RENDERER)
     target_link_libraries(${TARGET_NAME} PUBLIC TestFramework d3d12.lib shcore.lib)

@@ -13,6 +13,7 @@ class RenderSystem;
 class PhysicsManager;
 class AssetManager;
 class ConfigManager;
+class Scene;
 
 // Threading and event systems
 class WorkerPool;
@@ -50,6 +51,9 @@ public:
     std::shared_ptr<WorkerPool>          m_worker_pool;
     std::shared_ptr<EventBus>            m_event_bus;
     std::shared_ptr<RenderPacketBuffer>  m_render_packet_buffer;
+
+    // Scene management
+    std::shared_ptr<Scene>               m_active_scene;
 };
 
 extern RuntimeGlobalContext g_runtime_global_context;

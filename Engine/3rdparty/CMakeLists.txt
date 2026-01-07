@@ -216,9 +216,9 @@ if(NOT TARGET assimp)
 endif()
 
 # ==============================================================================
-# EnTT - Entity Component System (Optional, for future ECS support)
+# EnTT - Entity Component System
 # ==============================================================================
-# if(NOT TARGET EnTT)
-#     add_subdirectory(entt)
-#     set_target_properties(EnTT PROPERTIES FOLDER ${THIRD_PARTY_FOLDER}/entt)
-# endif()
+if(NOT TARGET EnTT)
+    add_subdirectory(entt)
+    set_target_properties(EnTT PROPERTIES FOLDER ${THIRD_PARTY_FOLDER}/entt)
+endif()

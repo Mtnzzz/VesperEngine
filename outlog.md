@@ -1,0 +1,1 @@
+[build] C:/Users/Matinizzz/Project/VesperEngine/Engine/source/runtime/function/framework/ecs/systems/frustum.cpp:24:17: error: type 'const Matrix4x4' does not provide a call operator

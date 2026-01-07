@@ -6,6 +6,7 @@
 #include "runtime/function/window/window_system.h"
 #include "runtime/function/render/render_packet.h"
 #include "runtime/function/render/render_system.h"
+#include "runtime/function/framework/scene/scene.h"
 #include "runtime/platform/input/input_system.h"
 
 #include <atomic>
@@ -255,6 +256,13 @@ void VesperEngine::logicTick(float deltaTime)
         renderSystem->processCameraInput(m_inputSystem.get(), deltaTime);
     }
 
+    // Update active scene
+    auto* scene = g_runtime_global_context.m_active_scene.get();
+    if (scene)
+    {
+        scene->update(deltaTime);
+    }
+
     // TODO: Update game logic (physics, AI, animation, etc.)
     // These could be parallelized via worker pool
 
@@ -269,11 +277,20 @@ void VesperEngine::logicTick(float deltaTime)
     auto* packetBuffer = g_runtime_global_context.m_render_packet_buffer.get();
     if (packetBuffer)
     {
-        RenderPacket* packet = packetBuffer->acquireForWrite();
-        if (packet)
+        // If we have an active scene, use its render preparation
+        if (scene)
         {
-            prepareRenderPacket(packet);
-            packetBuffer->releaseWrite();
+            scene->prepareForRendering(packetBuffer, m_frameIndex);
+        }
+        else
+        {
+            // Fallback: manual packet preparation
+            RenderPacket* packet = packetBuffer->acquireForWrite();
+            if (packet)
+            {
+                prepareRenderPacket(packet);
+                packetBuffer->releaseWrite();
+            }
         }
     }
 
@@ -412,7 +429,12 @@ void VesperEngine::tick()
         renderSystem->processCameraInput(m_inputSystem.get(), deltaTime);
     }
 
-    // TODO: Update game logic
+    // Update active scene
+    auto* scene = g_runtime_global_context.m_active_scene.get();
+    if (scene)
+    {
+        scene->update(deltaTime);
+    }
 
     // Render frame
     if (renderSystem && renderSystem->isInitialized())
@@ -460,28 +482,31 @@ void VesperEngine::shutdown()
     }
     m_renderThread.reset();
 
-    // 3. Shutdown render system (must be before window system)
+    // 3. Clear active scene
+    g_runtime_global_context.m_active_scene.reset();
+
+    // 4. Shutdown render system (must be before window system)
     if (g_runtime_global_context.m_render_system)
     {
         g_runtime_global_context.m_render_system->shutdown();
         g_runtime_global_context.m_render_system.reset();
     }
 
-    // 4. Shutdown input system
+    // 5. Shutdown input system
     if (m_inputSystem)
     {
         m_inputSystem->shutdown();
         m_inputSystem.reset();
     }
 
-    // 5. Shutdown window system (after render system stopped)
+    // 6. Shutdown window system (after render system stopped)
     if (m_windowSystem)
     {
         m_windowSystem->shutdown();
         m_windowSystem.reset();
     }
 
-    // 6. Shutdown threading and pipeline systems
+    // 7. Shutdown threading and pipeline systems
     g_runtime_global_context.shutdownSystems();
 
     m_initialized = false;
